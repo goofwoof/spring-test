@@ -25,6 +25,10 @@ public class VoteDto {
   private LocalDateTime localDateTime;
 
   private int num;
-  @ManyToOne @JoinColumn(name = "user_id") private UserDto user;
-  @ManyToOne @JoinColumn(name = "rs_event_id") private RsEventDto rsEvent;
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private UserDto userDto;
+  @ManyToOne
+  @JoinColumn(name = "rs_id")
+  private RsEventDto rsEventDto;
 }

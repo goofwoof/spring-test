@@ -1,8 +1,11 @@
 package com.thoughtworks.rslist.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thoughtworks.rslist.domain.Trade;
 import com.thoughtworks.rslist.dto.RsEventDto;
 import com.thoughtworks.rslist.dto.UserDto;
 import com.thoughtworks.rslist.dto.VoteDto;
+import com.thoughtworks.rslist.repository.MoneyRepository;
 import com.thoughtworks.rslist.repository.RsEventRepository;
 import com.thoughtworks.rslist.repository.UserRepository;
 import com.thoughtworks.rslist.repository.VoteRepository;
@@ -35,10 +38,12 @@ class RsControllerTest {
   @Autowired UserRepository userRepository;
   @Autowired RsEventRepository rsEventRepository;
   @Autowired VoteRepository voteRepository;
+  @Autowired MoneyRepository moneyRepository;
   private UserDto userDto;
 
   @BeforeEach
   void setUp() {
+    moneyRepository.deleteAll();
     voteRepository.deleteAll();
     rsEventRepository.deleteAll();
     userRepository.deleteAll();
@@ -58,7 +63,7 @@ class RsControllerTest {
     UserDto save = userRepository.save(userDto);
 
     RsEventDto rsEventDto =
-        RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
 
     rsEventRepository.save(rsEventDto);
 
@@ -76,10 +81,10 @@ class RsControllerTest {
     UserDto save = userRepository.save(userDto);
 
     RsEventDto rsEventDto =
-        RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
 
     rsEventRepository.save(rsEventDto);
-    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
+    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").userDto(save).build();
     rsEventRepository.save(rsEventDto);
     mockMvc.perform(get("/rs/1")).andExpect(jsonPath("$.eventName", is("第一条事件")));
     mockMvc.perform(get("/rs/1")).andExpect(jsonPath("$.keyword", is("无分类")));
@@ -98,15 +103,17 @@ class RsControllerTest {
   @Test
   public void shouldGetRsListBetween() throws Exception {
     UserDto save = userRepository.save(userDto);
-
     RsEventDto rsEventDto =
-        RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
+    rsEventRepository.save(rsEventDto);
+    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").userDto(save).build();
+    rsEventRepository.save(rsEventDto);
+    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第三条事件").userDto(save).build();
+    rsEventRepository.save(rsEventDto);
 
-    rsEventRepository.save(rsEventDto);
-    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
-    rsEventRepository.save(rsEventDto);
-    rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第三条事件").user(save).build();
-    rsEventRepository.save(rsEventDto);
+    mockMvc.perform(get("/rs/list"))
+            .andExpect(jsonPath("$", hasSize(3)));
+
     mockMvc
         .perform(get("/rs/list?start=1&end=2"))
         .andExpect(jsonPath("$", hasSize(2)))
@@ -123,7 +130,7 @@ class RsControllerTest {
         .andExpect(jsonPath("$[1].keyword", is("无分类")));
     mockMvc
         .perform(get("/rs/list?start=1&end=3"))
-        .andExpect(jsonPath("$", hasSize(3)))
+        .andExpect(jsonPath("$", hasSize(3))).andExpect(jsonPath("$[0].eventName", is("第一条事件")))
         .andExpect(jsonPath("$[0].keyword", is("无分类")))
         .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
         .andExpect(jsonPath("$[1].keyword", is("无分类")))
@@ -147,8 +154,8 @@ class RsControllerTest {
     assertEquals(all.size(), 1);
     assertEquals(all.get(0).getEventName(), "猪肉涨价了");
     assertEquals(all.get(0).getKeyword(), "经济");
-    assertEquals(all.get(0).getUser().getUserName(), save.getUserName());
-    assertEquals(all.get(0).getUser().getAge(), save.getAge());
+    assertEquals(all.get(0).getUserDto().getUserName(), save.getUserName());
+    assertEquals(all.get(0).getUserDto().getAge(), save.getAge());
   }
 
   @Test
@@ -163,7 +170,7 @@ class RsControllerTest {
   public void shouldVoteSuccess() throws Exception {
     UserDto save = userRepository.save(userDto);
     RsEventDto rsEventDto =
-        RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
     rsEventDto = rsEventRepository.save(rsEventDto);
 
     String jsonValue =
@@ -184,5 +191,62 @@ class RsControllerTest {
     List<VoteDto> voteDtos =  voteRepository.findAll();
     assertEquals(voteDtos.size(), 1);
     assertEquals(voteDtos.get(0).getNum(), 1);
+  }
+
+  @Test
+  public void shouldBuyRsSuccess() throws Exception {
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+
+    RsEventDto rsEventDto1 =
+            RsEventDto.builder().keyword("无分类").eventName("第二条事件").userDto(save).build();
+    rsEventDto1 = rsEventRepository.save(rsEventDto1);
+
+    Trade trade = Trade.builder().money(50).rank(1).build();
+    String jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto.getId())
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isOk());
+    trade = Trade.builder().money(500).rank(2).build();
+    jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto1.getId())
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isOk());
+
+    trade = Trade.builder().money(500).rank(3).build();
+    jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto.getId())
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error", is("rs has been bought")));
+  }
+
+  @Test
+  public void shouldBuyRsFail() throws Exception {
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").userDto(save).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+
+    Trade trade = Trade.builder().money(50).rank(1).build();
+    String jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto.getId())
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isOk());
+    trade = Trade.builder().money(40).rank(1).build();
+    jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto.getId())
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error", is("low price")));
+
+    trade = Trade.builder().money(500).rank(1).build();
+    jsonParam = new ObjectMapper().writeValueAsString(trade);
+    mockMvc.perform(post("/rs/buy/"+rsEventDto.getId()+100)
+            .content(jsonParam).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error", is("rs not exist")));
   }
 }

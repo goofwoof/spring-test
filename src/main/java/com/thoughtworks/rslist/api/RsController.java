@@ -5,6 +5,7 @@ import com.thoughtworks.rslist.domain.Trade;
 import com.thoughtworks.rslist.domain.Vote;
 import com.thoughtworks.rslist.dto.RsEventDto;
 import com.thoughtworks.rslist.dto.UserDto;
+import com.thoughtworks.rslist.dto.VoteDto;
 import com.thoughtworks.rslist.exception.Error;
 import com.thoughtworks.rslist.exception.RequestNotValidException;
 import com.thoughtworks.rslist.repository.RsEventRepository;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,11 +36,18 @@ public class RsController {
   @Autowired RsService rsService;
 
   @GetMapping("/rs/list")
-  public ResponseEntity<List<RsEvent>> getRsEventListBetween(
+  public ResponseEntity<List<?>> getRsEventListBetween(
       @RequestParam(required = false) Integer start, @RequestParam(required = false) Integer end) {
-    List<RsEvent> rsEvents =
-        rsEventRepository.findAll().stream()
-            .map(
+    if (start == null || end == null) {
+      return ResponseEntity.ok(rsService.getOrderedRsevents());
+    }
+    List<RsEventDto> rsEventDtoList = rsEventRepository.findAll();
+    rsEventDtoList.stream().forEach(rsEventDto -> rsEventDto.setVoteNum(
+            rsEventDto.getVoteDtoList().stream().mapToInt(VoteDto::getNum).sum()));
+    rsEventDtoList.sort(Comparator.comparingInt(RsEventDto::getId));
+    List<RsEvent> rsEvents = rsEventDtoList
+        .stream()
+                .map(
                 item ->
                     RsEvent.builder()
                         .eventName(item.getEventName())
@@ -47,9 +56,6 @@ public class RsController {
                         .voteNum(item.getVoteNum())
                         .build())
             .collect(Collectors.toList());
-    if (start == null || end == null) {
-      return ResponseEntity.ok(rsEvents);
-    }
     return ResponseEntity.ok(rsEvents.subList(start - 1, end));
   }
 
@@ -83,7 +89,7 @@ public class RsController {
             .keyword(rsEvent.getKeyword())
             .eventName(rsEvent.getEventName())
             .voteNum(0)
-            .user(userDto.get())
+            .userDto(userDto.get())
             .build();
     rsEventRepository.save(build);
     return ResponseEntity.created(null).build();
@@ -102,8 +108,8 @@ public class RsController {
   }
 
 
-  @ExceptionHandler(RequestNotValidException.class)
-  public ResponseEntity<Error> handleRequestErrorHandler(RequestNotValidException e) {
+  @ExceptionHandler({RequestNotValidException.class, RuntimeException.class})
+  public ResponseEntity<Error> handleRequestErrorHandler(Exception e) {
     Error error = new Error();
     error.setError(e.getMessage());
     return ResponseEntity.badRequest().body(error);

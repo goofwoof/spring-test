@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface VoteRepository extends PagingAndSortingRepository<VoteDto, Integer> {
     List<VoteDto> findAll();
-    List<VoteDto> findAllByUserIdAndRsEventId(int userId, int rsEventId, Pageable pageable);
+    List<VoteDto> findAllByUserDtoIdAndRsEventDtoId(int userDtoId, int rsEventDtoId, Pageable pageable);
 }

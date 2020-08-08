@@ -4,11 +4,14 @@ import com.thoughtworks.rslist.dto.RsEventDto;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RsEventRepository extends CrudRepository<RsEventDto, Integer> {
-  List<RsEventDto> findAll();
+    List<RsEventDto> findAll();
 
-  @Transactional
-  void deleteAllByUserId(int userId);
+    @Transactional
+    void deleteAllByUserDtoId(int userDtoId);
+
+    //List<RsEventDto> findOrderByVoteNum();
 }

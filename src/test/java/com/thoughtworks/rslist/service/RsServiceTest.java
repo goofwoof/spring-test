@@ -4,6 +4,7 @@ import com.thoughtworks.rslist.domain.Vote;
 import com.thoughtworks.rslist.dto.RsEventDto;
 import com.thoughtworks.rslist.dto.UserDto;
 import com.thoughtworks.rslist.dto.VoteDto;
+import com.thoughtworks.rslist.repository.MoneyRepository;
 import com.thoughtworks.rslist.repository.RsEventRepository;
 import com.thoughtworks.rslist.repository.UserRepository;
 import com.thoughtworks.rslist.repository.VoteRepository;
@@ -26,13 +27,14 @@ class RsServiceTest {
   @Mock RsEventRepository rsEventRepository;
   @Mock UserRepository userRepository;
   @Mock VoteRepository voteRepository;
+  @Mock MoneyRepository moneyRepository;
   LocalDateTime localDateTime;
   Vote vote;
 
   @BeforeEach
   void setUp() {
     initMocks(this);
-    rsService = new RsService(rsEventRepository, userRepository, voteRepository);
+    rsService = new RsService(rsEventRepository, userRepository, voteRepository, moneyRepository);
     localDateTime = LocalDateTime.now();
     vote = Vote.builder().voteNum(2).rsEventId(1).time(localDateTime).userId(1).build();
   }
@@ -57,7 +59,7 @@ class RsServiceTest {
             .id(1)
             .keyword("keyword")
             .voteNum(2)
-            .user(userDto)
+            .userDto(userDto)
             .build();
 
     when(rsEventRepository.findById(anyInt())).thenReturn(Optional.of(rsEventDto));
@@ -70,8 +72,8 @@ class RsServiceTest {
             VoteDto.builder()
                 .num(2)
                 .localDateTime(localDateTime)
-                .user(userDto)
-                .rsEvent(rsEventDto)
+                .userDto(userDto)
+                .rsEventDto(rsEventDto)
                 .build());
     verify(userRepository).save(userDto);
     verify(rsEventRepository).save(rsEventDto);

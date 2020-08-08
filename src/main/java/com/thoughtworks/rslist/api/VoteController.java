@@ -22,14 +22,14 @@ public class VoteController {
       @RequestParam int userId, @RequestParam int rsEventId, @RequestParam int pageIndex) {
     Pageable pageable = PageRequest.of(pageIndex - 1, 5);
     return ResponseEntity.ok(
-        voteRepository.findAllByUserIdAndRsEventId(userId, rsEventId, pageable).stream()
+        voteRepository.findAllByUserDtoIdAndRsEventDtoId(userId, rsEventId, pageable).stream()
             .map(
                 item ->
                     Vote.builder()
                         .voteNum(item.getNum())
-                        .userId(item.getUser().getId())
+                        .userId(item.getUserDto().getId())
                         .time(item.getLocalDateTime())
-                        .rsEventId(item.getRsEvent().getId())
+                        .rsEventId(item.getRsEventDto().getId())
                         .build())
             .collect(Collectors.toList()));
   }

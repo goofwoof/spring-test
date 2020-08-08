@@ -5,13 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.List;
 
 @Entity
@@ -30,8 +24,11 @@ public class UserDto {
     private int age;
     private String email;
     private String phone;
-    private int voteNum =10;
+    private int voteNum;
 
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "user")
+    @OneToMany(mappedBy = "userDto")
     private List<RsEventDto> rsEventDtos;
+
+    @OneToMany(mappedBy = "userDto")
+    private List<VoteDto> voteDtoList;
 }
