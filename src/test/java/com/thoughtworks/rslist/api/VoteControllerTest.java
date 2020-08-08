@@ -150,6 +150,7 @@ class VoteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(4)))
                 .andExpect(jsonPath("$[0].eventName", is(rsEventDto2.getEventName())))
+                .andExpect(jsonPath("$[0].rsOrder", is(1)))
                 .andExpect(jsonPath("$[1].eventName", is(rsEventDto.getEventName())))
                 .andExpect(jsonPath("$[2].eventName", is(rsEventDto3.getEventName())))
                 .andExpect(jsonPath("$[3].eventName", is(rsEventDto1.getEventName())));

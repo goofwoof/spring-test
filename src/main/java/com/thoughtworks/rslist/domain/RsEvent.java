@@ -1,5 +1,6 @@
 package com.thoughtworks.rslist.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @Builder
 @Data
 public class RsEvent implements Serializable {
+  private Integer rsOrder;
   @NotNull private String eventName;
   @NotNull private String keyword;
   private int voteNum;

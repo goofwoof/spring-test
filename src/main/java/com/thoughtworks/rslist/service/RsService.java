@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,16 +112,17 @@ public class RsService {
           }}).collect(Collectors.toList());
     List<RsEventDto> finalRsEventDtoList = new ArrayList<>(rsEventDtoList);
     moneyList.forEach(rsEventDto -> finalRsEventDtoList.add(Math.min(rsEventDto.getMoneyRsDto().getRank() -1, finalRsEventDtoList.size()), rsEventDto));
-    return finalRsEventDtoList.stream()
-            .map(
-                    item ->
-                            RsEvent.builder()
-                                    .eventName(item.getEventName())
-                                    .keyword(item.getKeyword())
-                                    .userId(item.getId())
-                                    .voteNum(item.getVoteNum())
-                                    .build())
+    List<RsEvent> list = finalRsEventDtoList.stream()
+            .map(item -> RsEvent.builder()
+                    .eventName(item.getEventName())
+                    .keyword(item.getKeyword())
+                    .userId(item.getId())
+                    .voteNum(item.getVoteNum())
+                    .build())
             .collect(Collectors.toList());
+    AtomicInteger index = new AtomicInteger(1);
+    list.stream().forEach(rsEvent -> rsEvent.setRsOrder(index.getAndIncrement()));
+    return list;
   }
 
 }
