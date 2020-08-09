@@ -1,9 +1,13 @@
 spring:
+  jackson:
+    time-zone=GMT+8:
   datasource:
-    url: jdbc:mysql://localhost:3306/rsSystem?characterEncoding=UTF-8
-    username: root
-    password: test
     driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:5150/rsevent?characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2b8
+    username: demo
+    password: 123456
   jpa:
+    database: MYSQL
+    show-sql: true
     hibernate:
       ddl-auto: create

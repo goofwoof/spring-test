@@ -66,7 +66,6 @@ public class RsService {
       throw new RuntimeException("rs not exist");
     }
     RsEventDto rsEventDto = rsEventRepository.findById(id).get();
-    //if(!moneyRepository.findByRsEventDtoId(rsEventDto.getId()).isEmpty()){
     if(rsEventDto.getMoneyRsDto() != null){
       throw new RuntimeException("rs has been bought");
     }

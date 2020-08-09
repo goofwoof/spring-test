@@ -11,4 +11,7 @@ public interface MoneyRepository extends CrudRepository<MoneyRsDto, Integer> {
     List<MoneyRsDto> findByRsEventDtoId(int rsEventDtoId);
 
     MoneyRsDto findByRank(int rank);
+
+    @Override
+    List<MoneyRsDto> findAll();
 }
